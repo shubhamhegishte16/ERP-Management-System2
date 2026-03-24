@@ -1,97 +1,110 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { ensureDefaultUsers } = require('../config/defaultUsers');
 
-// Generate JWT
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
-
-// @desc  Register user
-// @route POST /api/auth/register
-// @access Public
-const register = async (req, res) => {
-  try {
-    await ensureDefaultUsers();
-    const { name, email, password, manager, department, registrationDate } = req.body;
-
-    if (!name || !email || !password || !manager || !registrationDate)
-      return res.status(400).json({ success: false, message: 'Please provide name, email, password, manager and registration date' });
-
-    const exists = await User.findOne({ email });
-    if (exists)
-      return res.status(400).json({ success: false, message: 'Email already registered' });
-
-    const user = await User.create({ name, email, password, role: 'employee', manager, department, registrationDate });
-    const token = generateToken(user._id);
-
-    res.status(201).json({ success: true, token, user });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// @desc  Login user
-// @route POST /api/auth/login
-// @access Public
+// @desc    Login user
+// @route   POST /api/auth/login
 const login = async (req, res) => {
   try {
-    await ensureDefaultUsers();
-    const { email, password, role } = req.body;
-
-    if (!email || !password)
+    const { email, password } = req.body;
+    
+    console.log('Login attempt for:', email);
+    
+    if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
-
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.matchPassword(password)))
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-
-    if (role && user.role !== role)
-      return res.status(401).json({ success: false, message: `This account is registered as ${user.role}` });
-
+    }
+    
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      console.log('User not found:', email);
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    
+    const isMatch = await user.matchPassword(password);
+    console.log('Password match result:', isMatch);
+    
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    
     const token = generateToken(user._id);
-    const userObj = user.toJSON(); // strips password
-
-    res.json({ success: true, token, user: userObj });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// @desc  Get current user
-// @route GET /api/auth/me
-// @access Private
+// @desc    Register user
+// @route   POST /api/auth/register
+const register = async (req, res) => {
+  try {
+    const { name, email, password, role, department } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide name, email and password' });
+    }
+    
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: 'User already exists' });
+    }
+    
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'employee',
+      department: department || 'General',
+      isActive: true
+    });
+    
+    const token = generateToken(user._id);
+    
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department
+      }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
 const getMe = async (req, res) => {
-  res.json({ success: true, user: req.user });
-};
-
-// @desc  Update password
-// @route PUT /api/auth/password
-// @access Private
-const updatePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user._id).select('+password');
-
-    if (!(await user.matchPassword(currentPassword)))
-      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
-
-    user.password = newPassword;
-    await user.save();
-
-    res.json({ success: true, message: 'Password updated successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    const user = await User.findById(req.user._id).select('-password');
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-const getManagers = async (req, res) => {
-  try {
-    await ensureDefaultUsers();
-    const managers = await User.find({ role: 'manager' }).select('name email');
-    res.json({ success: true, managers });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-module.exports = { register, login, getMe, updatePassword, getManagers };
+module.exports = { login, register, getMe };

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const ADMIN_CREDENTIALS = {
   email: 'admin@workpulse.com',
-  password: 'admin123',
+  password: 'password123',
 };
 
 const getHomeRoute = (role) => {
