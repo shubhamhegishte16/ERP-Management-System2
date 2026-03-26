@@ -7,8 +7,8 @@ const Store = require('electron-store');
 const store = new Store();
 
 const DEFAULT_API_URL = 'http://localhost:5000/api';
-const POLL_INTERVAL = 10000;
-const FLUSH_INTERVAL = 60000;
+const POLL_INTERVAL = 2000;
+const FLUSH_INTERVAL = 30000;
 const IDLE_THRESHOLD_SECONDS = 90;
 const TRACKER_VERSION = '1.1.0';
 

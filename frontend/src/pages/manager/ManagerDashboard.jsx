@@ -13,7 +13,12 @@ const chartDefaults = {
   plugins: { legend: { labels: { color: '#7b7a99', font: { family: 'DM Sans' } } } },
   scales: {
     x: { ticks: { color: '#7b7a99' }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: '#7b7a99' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y: { 
+      min: 0,
+      max: 100,
+      ticks: { color: '#7b7a99' }, 
+      grid: { color: 'rgba(255,255,255,0.04)' } 
+    },
   },
 };
 

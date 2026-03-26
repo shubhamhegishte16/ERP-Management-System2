@@ -133,8 +133,9 @@ const getMyActivity = async (req, res) => {
     }).sort({ sessionStart: -1, date: -1 });
 
     const summary = buildTodaySummary(activities.filter((entry) => {
-      const { start: todayStart, end: todayEnd } = buildDayRange();
-      return entry.date >= todayStart && entry.date <= todayEnd;
+      const { start, end } = buildDayRange();
+      return entry.date >= start && entry.date <= end;
+
     }));
 
     res.json({
@@ -237,46 +238,51 @@ async function recalcProductivity(userId) {
   const totalActive = activities
     .filter((activity) => activity.category !== 'idle')
     .reduce((sum, activity) => sum + activity.durationSeconds, 0);
+
   const totalIdle = activities
     .filter((activity) => activity.category === 'idle')
     .reduce((sum, activity) => sum + activity.durationSeconds, 0);
+
   const totalAll = totalActive + totalIdle;
 
-  const score = totalAll > 0 ? Math.min(100, Math.round((totalActive / totalAll) * 100)) : 0;
+  const DAILY_GOAL_SECONDS = 6000; // 100 minutes (1 minute = 1%)
+  const score = Math.min(100, Math.round((totalActive / DAILY_GOAL_SECONDS) * 100));
 
-  const appMap = {};
-  activities.forEach((activity) => {
-    appMap[activity.appName] = (appMap[activity.appName] || 0) + activity.durationSeconds;
-  });
 
-  const topApps = Object.entries(appMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([appName, durationSeconds]) => ({ appName, durationSeconds }));
 
-  const focusedSeconds = activities
-    .filter((activity) => PRODUCTIVE_CATEGORIES.has(activity.category))
-    .reduce((sum, activity) => sum + activity.durationSeconds, 0);
-  const focusScore = totalActive > 0 ? Math.round((focusedSeconds / totalActive) * 100) : 0;
+const appMap = {};
+activities.forEach((activity) => {
+  appMap[activity.appName] = (appMap[activity.appName] || 0) + activity.durationSeconds;
+});
 
-  const burnoutRisk = totalActive > 36000 ? 'high' : totalActive > 25200 ? 'medium' : 'low';
-  const anomalyFlag = totalIdle > totalActive && totalAll > 3600;
-  const anomalyReason = anomalyFlag ? 'Idle time exceeded active time for more than one tracked hour.' : '';
+const topApps = Object.entries(appMap)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([appName, durationSeconds]) => ({ appName, durationSeconds }));
 
-  await Productivity.findOneAndUpdate(
-    { user: userId, date: start },
-    {
-      score,
-      totalActiveSeconds: totalActive,
-      totalIdleSeconds: totalIdle,
-      focusScore,
-      burnoutRisk,
-      anomalyFlag,
-      anomalyReason,
-      topApps,
-    },
-    { upsert: true, new: true }
-  );
+const focusedSeconds = activities
+  .filter((activity) => PRODUCTIVE_CATEGORIES.has(activity.category))
+  .reduce((sum, activity) => sum + activity.durationSeconds, 0);
+const focusScore = totalActive > 0 ? Math.round((focusedSeconds / totalActive) * 100) : 0;
+
+const burnoutRisk = totalActive > 36000 ? 'high' : totalActive > 25200 ? 'medium' : 'low';
+const anomalyFlag = totalIdle > totalActive && totalAll > 3600;
+const anomalyReason = anomalyFlag ? 'Idle time exceeded active time for more than one tracked hour.' : '';
+
+await Productivity.findOneAndUpdate(
+  { user: userId, date: start },
+  {
+    score,
+    totalActiveSeconds: totalActive,
+    totalIdleSeconds: totalIdle,
+    focusScore,
+    burnoutRisk,
+    anomalyFlag,
+    anomalyReason,
+    topApps,
+  },
+  { upsert: true, new: true }
+);
 }
 
 module.exports = { logActivity, getMyActivity, getHourlyBreakdown, getTeamActivity };

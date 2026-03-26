@@ -1,32 +1,60 @@
 # WorkPulse
 
-AI-powered employee productivity and project tracking system built with React, Node.js, MongoDB, and Electron.
+WorkPulse is an employee management, productivity tracking, and project assignment system built with React, Node.js, MongoDB, and Electron.
+
+It includes:
+- a `frontend` web application for admin, manager, and employee panels
+- a `backend` API with MongoDB
+- an optional `desktop` Electron tracker for activity capture
 
 ## Project Structure
 
 ```text
 ERP-System-Tracker-main/
-|-- backend/   # Express API + MongoDB models/routes/controllers
-|-- frontend/  # React application
-`-- desktop/   # Electron desktop tracker (optional)
+|-- backend/    Express API, auth, MongoDB models, controllers, routes
+|-- frontend/   React web application
+|-- desktop/    Electron desktop activity tracker
+|-- README.md
+`-- .gitignore
 ```
 
-## What This Project Does
+## Tech Stack
 
-WorkPulse has 3 main roles:
+- Frontend: React, React Router, Axios, Chart.js, Recharts
+- Backend: Node.js, Express
+- Database: MongoDB, Mongoose
+- Authentication: JWT, bcryptjs
+- Desktop App: Electron
+- Realtime/Tracking: Socket.IO
 
-- Admin
-  Can monitor the organization, manage users, assign projects/tasks, and delete users from the employee panel.
-- Manager
-  Can assign projects and tasks to employees, view dashboards, and track attendance/productivity for employees.
-- Employee
-  Can register, log in, view assigned projects/tasks, attendance, activity, and personal dashboard information.
+## Main Roles
+
+### Admin
+
+- logs in using the permanent admin account
+- views the admin panel
+- sees managers and registered employees in the `Employee` section
+- can assign projects and tasks
+- can delete users from the employee list
+
+### Manager
+
+- logs in using a permanent manager account
+- views the manager panel
+- sees registered employees in the `Employee` section
+- can assign projects and tasks to employees
+
+### Employee
+
+- registers using the registration form
+- logs in with the registered email and password
+- sees assigned projects, assigned tasks, attendance, and personal dashboard data
 
 ## Current Workflow
 
 ### 1. Employee Registration
 
-Employees register from the frontend registration form with:
+Employees register through the web app with these fields:
 
 - Name
 - Email
@@ -35,125 +63,41 @@ Employees register from the frontend registration form with:
 - Department
 - Registration Date
 
-Managers and admin are permanent accounts and are not created from the registration form.
+Admin and manager accounts are permanent and are not created from the registration page.
 
 ### 2. Login
 
-The login screen supports 3 role selections:
+The login page includes a role dropdown:
 
 - Admin
 - Manager
 - Employee
 
-The selected role must match the account role in the database.
+The selected role must match the role stored for that account in MongoDB.
 
-### 3. Project and Task Assignment
+### 3. User Visibility
 
-- Admin can assign projects/tasks to managers and employees.
-- Manager can assign projects/tasks to employees.
-- Assigned projects appear in the employee panel.
-- Assigned tasks appear in the employee tasks panel.
+- Admin `Employee` section shows:
+  - all managers
+  - all registered employees
+- Manager `Employee` section shows:
+  - only registered employees
 
-### 4. Dashboards
+### 4. Project Assignment
 
-- Admin and manager use the manager-style dashboard layout.
-- Employee has a separate employee dashboard.
-- Attendance pages show attendance records and stats.
+- Admin can assign projects to managers and employees
+- Manager can assign projects to employees
+- Assigned projects appear in the employee panel
 
-### 5. Desktop Tracker
+### 5. Task Assignment
 
-The desktop app is optional. It is intended to track local activity and send activity data to the backend.
+- Admin can assign tasks to managers and employees
+- Manager can assign tasks to employees
+- Assigned tasks appear in the employee task panel
 
-## Prerequisites
+### 6. Desktop Tracker
 
-Before running the project, make sure you have:
-
-- Node.js installed
-- MongoDB Community Server installed and running locally
-- MongoDB Compass optional, for viewing the database
-
-Default local MongoDB connection:
-
-```env
-MONGO_URI=mongodb://localhost:27017/workpulse
-```
-
-## Environment Setup
-
-The backend uses `backend/.env`.
-
-Example:
-
-```env
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/workpulse
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:3000
-```
-
-## How To Run The Project Properly
-
-This project is easiest to run in 2 or 3 terminals.
-
-### Terminal 1: Backend
-
-```powershell
-cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\backend
-npm.cmd install
-npm.cmd start
-```
-
-Expected result:
-
-- Backend starts on `http://localhost:5000`
-- MongoDB connects successfully
-
-Important:
-
-- On Windows PowerShell, use `npm.cmd` instead of `npm` if execution policy blocks `npm`.
-- If you see `EADDRINUSE` on port `5000`, stop the old backend process first and restart.
-
-### Terminal 2: Frontend
-
-```powershell
-cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\frontend
-npm.cmd install
-npm.cmd start
-```
-
-Expected result:
-
-- Frontend starts on `http://localhost:3000`
-
-### Terminal 3: Desktop App (Optional)
-
-```powershell
-cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\desktop
-npm.cmd install
-npm.cmd start
-```
-
-Expected result:
-
-- Electron app opens
-- Sign in with the same WorkPulse account used in the browser
-- Tracker starts sending active application sessions to `POST /api/activity`
-
-Note:
-
-- The web application can run without the desktop app.
-- The desktop app is only needed for activity tracking behavior.
-- The tracker UI lets employees pause capture or enable privacy mode before logs are uploaded.
-
-## Recommended Start Order
-
-1. Start MongoDB Server
-2. Start backend
-3. Start frontend
-4. Open the app in the browser
-5. Start desktop app only if you need activity tracking
+The desktop app is optional. It can be used for local activity tracking and sending activity records to the backend.
 
 ## Default Accounts
 
@@ -168,11 +112,126 @@ Note:
 - `vinaya@gmail.com`
 - `rushan@gmail.com`
 
-Password for all managers:
+Manager password for all three accounts:
 
 - `manager123`
 
-## Main Backend Routes
+## Prerequisites
+
+Before running the project, install:
+
+- Node.js
+- MongoDB Community Server
+- MongoDB Compass (optional)
+
+This project currently expects local MongoDB by default:
+
+```env
+MONGO_URI=mongodb://localhost:27017/workpulse
+```
+
+Important:
+- MongoDB Compass is only a client UI
+- Compass alone is not enough
+- MongoDB Server must be installed and running
+
+## Environment Setup
+
+The backend reads configuration from [backend/.env](C:/Users/SHUBHAM/Downloads/ERP-System-Tracker-main/ERP-System-Tracker-main/backend/.env).
+
+Current local setup:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://localhost:27017/workpulse
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:3000
+```
+
+## How To Start MongoDB On Windows
+
+Open PowerShell and run:
+
+```powershell
+Start-Service MongoDB
+```
+
+Check status:
+
+```powershell
+Get-Service MongoDB
+```
+
+Restart if needed:
+
+```powershell
+Restart-Service MongoDB
+```
+
+## How To Run The Project
+
+Use 2 or 3 terminals.
+
+### Step 1. Start MongoDB
+
+```powershell
+Start-Service MongoDB
+```
+
+### Step 2. Start Backend
+
+```powershell
+cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\backend
+npm.cmd install
+npm.cmd start
+```
+
+Expected result:
+- backend runs on `http://localhost:5000`
+- MongoDB connects successfully
+
+### Step 3. Start Frontend
+
+```powershell
+cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\frontend
+npm.cmd install
+npm.cmd start
+```
+
+Expected result:
+- frontend runs on `http://localhost:3000`
+
+### Step 4. Start Desktop App (Optional)
+
+```powershell
+cd C:\Users\SHUBHAM\Downloads\ERP-System-Tracker-main\ERP-System-Tracker-main\desktop
+npm.cmd install
+npm.cmd start
+```
+
+Expected result:
+- Electron app opens
+
+## Recommended Start Order
+
+1. Start MongoDB
+2. Start backend
+3. Start frontend
+4. Open the web app in the browser
+5. Start desktop only if activity tracking is needed
+
+## Important Windows Note
+
+On Windows PowerShell, `npm` may be blocked by execution policy. If that happens, use:
+
+```powershell
+npm.cmd install
+npm.cmd start
+```
+
+## API Overview
 
 ### Auth
 
@@ -208,48 +267,66 @@ Password for all managers:
 - `GET /api/admin/stats`
 - `DELETE /api/admin/users/:id`
 
-## Common Problems
+## Common Problems And Fixes
 
-### `Invalid email or password`
+### Backend Port Already In Use
+
+Error:
+
+```text
+EADDRINUSE: address already in use :::5000
+```
+
+Meaning:
+- another backend process is already running on port `5000`
+
+Fix:
+- stop the old backend terminal
+- then start backend again
+
+### Frontend Port Already In Use
+
+If frontend says port `3000` is already in use:
+
+- another React app or old frontend instance is already running
+- close the old process or terminal first
+
+### Invalid Email Or Password
 
 Check:
-
-- Backend is actually restarted
+- backend is running
 - MongoDB is running
-- You selected the correct role in the login dropdown
+- the selected role matches the account role
+- you are using the correct default credentials
 
-### `EADDRINUSE: address already in use :::5000`
-
-Another backend process is already running on port `5000`. Stop it, then restart backend.
-
-### MongoDB connection error
+### MongoDB Connection Error
 
 Check:
-
 - MongoDB service is running
 - `MONGO_URI` is correct in `backend/.env`
+- local MongoDB is listening on port `27017`
 
-### Frontend starts but API calls fail
+### Frontend Loads But API Fails
 
 Check:
+- backend is running on port `5000`
+- frontend is running on port `3000`
+- frontend proxy points to `http://localhost:5000`
+- `CLIENT_URL=http://localhost:3000` is set in backend `.env`
 
-- Backend is running on port `5000`
-- Frontend is running on port `3000`
-- `CLIENT_URL=http://localhost:3000` in backend `.env`
+## Notes About The Current Project
 
-## Tech Stack
+- employee registration is enabled
+- admin and manager accounts are permanent
+- tasks are stored inside projects
+- deleting a project also removes its tasks
+- attendance pages do not use the clock widget now
+- the desktop app is optional and not required for the main web app to work
 
-- Frontend: React
-- Backend: Node.js + Express
-- Database: MongoDB + Mongoose
-- Auth: JWT + bcryptjs
-- Desktop: Electron
-- Charts: Chart.js / react-chartjs-2
+## Suggested Git Commit Message
 
-## Notes
+If you want a clean commit message for the current update, use:
 
-- Tasks are stored inside projects.
-- Deleting a project also removes its tasks.
-- Admin can delete managers and employees from the Employee panel.
-- Attendance currently shows attendance records and summaries without the clock widget.
-- Employee activity now records application name, window title, session start/end time, duration, idle periods, and per-day summaries for productivity analysis.
+```text
+Update README with setup, run steps, roles, and project workflow
+```
